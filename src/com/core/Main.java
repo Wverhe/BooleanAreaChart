@@ -2,28 +2,33 @@ package com.core;
 
 import com.core.component.CustomButton;
 import com.core.component.CustomGridPane;
+import com.core.component.InfoLabel;
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.StackedAreaChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
-
 import java.io.IOException;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.LinkedList;
-import java.util.Scanner;
+import java.util.Locale;
 
 public class Main extends Application {
     private LinkedList<XYChart.Data> clientA, clientB, serverListA, serverListB;
     private XYChart.Series seriesA, seriesB, seriesC;
     private AreaChart<Number, Number> areaChartA, areaChartB, areaChartC;
     private NumberAxis xAxisA, xAxisB, xAxisC, yAxisA, yAxisB, yAxisC;
+    private DatePicker datePicker;
+    private InfoLabel lblInfo;
+
     @Override
     public void start(Stage primaryStage) throws Exception{
         primaryStage.setMaximized(true);
@@ -68,28 +73,22 @@ public class Main extends Application {
         ScrollPane scrollPaneA = new ScrollPane();
         scrollPaneA.setFitToHeight(true);
         areaChartA.getData().addAll(seriesA);
-        //areaChartA.setPrefHeight(primaryStage.getHeight()/3);
-        //areaChartA.setPrefWidth(20000);
+        areaChartA.setMinWidth(1000);
         scrollPaneA.setContent(areaChartA);
-        areaChartA.setMinWidth(scrollPaneA.getWidth());
 
         ScrollPane scrollPaneB = new ScrollPane();
         scrollPaneB.setFitToHeight(true);
-        //scrollPaneB.setFitToWidth(true);
         areaChartB.getData().addAll(seriesB);
-        /*areaChartB.setPrefWidth(20000);*/
-        areaChartA.setMinWidth(scrollPaneA.getWidth());
+        areaChartB.setMinWidth(1000);
         scrollPaneB.setContent(areaChartB);
 
         ScrollPane scrollPaneC = new ScrollPane();
         scrollPaneC.setFitToHeight(true);
-        //scrollPaneC.setFitToWidth(true);
         areaChartC.getData().addAll(seriesC);
-        /*areaChartC.setPrefWidth(20000);*/
-        areaChartC.setMinWidth(scrollPaneB.getWidth());
+        areaChartC.setMinWidth(1000);
         scrollPaneC.setContent(areaChartC);
 
-        gridPane.addRows(4);
+        gridPane.addRows(5);
         gridPane.addColumns(3);
         gridPane.add(scrollPaneA, 0, 0, 3, 1);
         gridPane.add(scrollPaneB, 0, 1, 3, 1);
@@ -98,50 +97,50 @@ public class Main extends Application {
         btnRequest.setOnAction(
             e -> {
                 try {
-                    InetAddress address = InetAddress.getByName("174.138.38.14"); //TODO: Fill IP
-                    //InetAddress address = InetAddress.getLocalHost();
+                    //InetAddress address = InetAddress.getByName("174.138.38.14"); //TODO: Fill IP
+                    InetAddress address = InetAddress.getLocalHost();
                     DatagramSocket datagramSocket = new DatagramSocket();
 
-                    byte[] buffer = "request".getBytes();
+                    byte[] buffer = ("request:" + datePicker.getValue().getMonthValue() + "/" + datePicker.getValue().getDayOfMonth() + "/" + datePicker.getValue().getYear()).getBytes();
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, 5001);
                     datagramSocket.send(packet);
 
                     byte[] buffer2 = new byte[100000];
                     packet = new DatagramPacket(buffer2, buffer2.length);
                     datagramSocket.receive(packet);
-
                     String response1 = new String(buffer2);
-                    System.out.println("HERE1");
 
-                    datagramSocket.receive(packet);
+                    if(response1.contains("Invalid")){
+                        lblInfo.showError("Error: " + response1);
+                    }else {
+                        lblInfo.dismiss();
+                        datagramSocket.receive(packet);
+                        String response2 = new String(buffer2);
 
-                    String response2 = new String(buffer2);
+                        clientA.clear();
+                        clientB.clear();
 
-                    System.out.println(response1 + "-----\n" + response2);
+                        String[] allLines = response1.split("\n");
+                        //TODO: Figure out if allLines.length - 1 or -2 [Should be -1 due to new line at bottom of file, but I honestly don't know]
+                        for (int i = 0; i < allLines.length - 2; i++) {
+                            String index = allLines[i].split(":")[0];
+                            String value = allLines[i].split(":")[1];
+                            System.out.println(index + ":" + value);
+                            serverListA.add(new XYChart.Data(Integer.parseInt(index), Integer.parseInt(value)));
+                        }
 
-                    clientA.clear();
-                    clientB.clear();
-
-                    String[] allLines = response1.split("\n");
-                    //TODO: Figure out if allLines.length - 1 or -2
-                    for(int i = 0; i < allLines.length - 2; i++){
-                        String index = allLines[i].split(":")[0];
-                        String value = allLines[i].split(":")[1];
-                        System.out.println(index + ":" + value);
-                        serverListA.add(new XYChart.Data(Integer.parseInt(index), Integer.parseInt(value)));
+                        allLines = response2.split("\n");
+                        //TODO: WHY DOES THIS HAVE TO BE -2
+                        for (int i = 0; i < allLines.length - 2; i++) {
+                            String index = allLines[i].split(":")[0];
+                            String value = allLines[i].split(":")[1];
+                            serverListB.add(new XYChart.Data(Integer.parseInt(index), Integer.parseInt(value)));
+                        }
+                        clientA = serverListA;
+                        clientB = serverListB;
+                        updateSeries(clientA, clientB);
+                        fillSeries();
                     }
-
-                    allLines = response2.split("\n");
-                    //TODO: WHY DOES THIS HAVE TO BE -2
-                    for(int i = 0; i < allLines.length - 2; i++){
-                        String index = allLines[i].split(":")[0];
-                        String value = allLines[i].split(":")[1];
-                        serverListB.add(new XYChart.Data(Integer.parseInt(index), Integer.parseInt(value)));
-                    }
-                    clientA = serverListA;
-                    clientB = serverListB;
-                    updateSeries(clientA, clientB);
-                    fillSeries();
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
@@ -149,6 +148,13 @@ public class Main extends Application {
             }
         );
         gridPane.add(btnRequest, 1, 3, 1, 1);
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.HOUR, -5);//Adjusting for NY time difference.
+        datePicker = new DatePicker();
+        datePicker.setValue(LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)));//Month is always off by 1?
+        gridPane.add(datePicker, 2, 3, 1, 1);
+        lblInfo = new InfoLabel("");
+        gridPane.add(lblInfo, 0, 4, 3, 1);
 
         primaryStage.setTitle("Boolean Comparison Graph");
         Scene scene = new Scene(gridPane, 300, 275);
@@ -209,9 +215,6 @@ public class Main extends Application {
             }
             seriesC.getData().add(new XYChart.Data(tempXPoint, tempYPoint));
         }
-        //TODO: Remove this Below Probably
-        areaChartA.applyCss();
-        areaChartA.layout();
     }
 
     public static void main(String[] args) {
