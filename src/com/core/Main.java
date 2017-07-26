@@ -67,27 +67,26 @@ public class Main extends Application {
 
         ScrollPane scrollPaneA = new ScrollPane();
         scrollPaneA.setFitToHeight(true);
-        scrollPaneA.setFitToWidth(true);
         areaChartA.getData().addAll(seriesA);
         //areaChartA.setPrefHeight(primaryStage.getHeight()/3);
         //areaChartA.setPrefWidth(20000);
-        //areaChartA.setMinWidth(20000);
         scrollPaneA.setContent(areaChartA);
+        areaChartA.setMinWidth(scrollPaneA.getWidth());
 
         ScrollPane scrollPaneB = new ScrollPane();
         scrollPaneB.setFitToHeight(true);
-        scrollPaneB.setFitToWidth(true);
+        //scrollPaneB.setFitToWidth(true);
         areaChartB.getData().addAll(seriesB);
-        /*areaChartB.setPrefWidth(20000);
-        areaChartB.setMinWidth(20000);*/
+        /*areaChartB.setPrefWidth(20000);*/
+        areaChartA.setMinWidth(scrollPaneA.getWidth());
         scrollPaneB.setContent(areaChartB);
 
         ScrollPane scrollPaneC = new ScrollPane();
         scrollPaneC.setFitToHeight(true);
-        scrollPaneC.setFitToWidth(true);
+        //scrollPaneC.setFitToWidth(true);
         areaChartC.getData().addAll(seriesC);
-        /*areaChartC.setPrefWidth(20000);
-        areaChartC.setMinWidth(20000);*/
+        /*areaChartC.setPrefWidth(20000);*/
+        areaChartC.setMinWidth(scrollPaneB.getWidth());
         scrollPaneC.setContent(areaChartC);
 
         gridPane.addRows(4);
@@ -99,7 +98,7 @@ public class Main extends Application {
         btnRequest.setOnAction(
             e -> {
                 try {
-                    InetAddress address = InetAddress.getByName(""); //TODO: Fill IP
+                    InetAddress address = InetAddress.getByName("174.138.38.14"); //TODO: Fill IP
                     //InetAddress address = InetAddress.getLocalHost();
                     DatagramSocket datagramSocket = new DatagramSocket();
 
@@ -112,21 +111,23 @@ public class Main extends Application {
                     datagramSocket.receive(packet);
 
                     String response1 = new String(buffer2);
+                    System.out.println("HERE1");
 
                     datagramSocket.receive(packet);
 
                     String response2 = new String(buffer2);
 
-                    //System.out.println(response1 + "-----\n" + response2);
+                    System.out.println(response1 + "-----\n" + response2);
 
                     clientA.clear();
                     clientB.clear();
 
                     String[] allLines = response1.split("\n");
                     //TODO: Figure out if allLines.length - 1 or -2
-                    for(int i = 0; i < allLines.length - 1; i++){
+                    for(int i = 0; i < allLines.length - 2; i++){
                         String index = allLines[i].split(":")[0];
                         String value = allLines[i].split(":")[1];
+                        System.out.println(index + ":" + value);
                         serverListA.add(new XYChart.Data(Integer.parseInt(index), Integer.parseInt(value)));
                     }
 
@@ -163,6 +164,9 @@ public class Main extends Application {
         xAxisB.setUpperBound((Integer) data2.getLast().getXValue());
         xAxisC.setLowerBound((Integer) data1.get(0).getXValue());
         xAxisC.setUpperBound((Integer) data1.getLast().getXValue());
+        areaChartA.setPrefWidth(data1.size() * 10);
+        areaChartB.setPrefWidth(data2.size() * 10);
+        areaChartC.setPrefWidth(data1.size() * 10);
     }
 
     private void fillSeries(){
@@ -205,7 +209,7 @@ public class Main extends Application {
             }
             seriesC.getData().add(new XYChart.Data(tempXPoint, tempYPoint));
         }
-        //TODO: Remove This
+        //TODO: Remove this Below Probably
         areaChartA.applyCss();
         areaChartA.layout();
     }
