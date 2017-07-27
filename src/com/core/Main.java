@@ -11,15 +11,14 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.ScrollPane;
 import javafx.stage.Stage;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.LinkedList;
-import java.util.Locale;
 
 public class Main extends Application {
     private LinkedList<XYChart.Data> clientA, clientB, serverListA, serverListB;
@@ -97,8 +96,8 @@ public class Main extends Application {
         btnRequest.setOnAction(
             e -> {
                 try {
-                    //InetAddress address = InetAddress.getByName("174.138.38.14"); //TODO: Fill IP
-                    InetAddress address = InetAddress.getLocalHost();
+                    InetAddress address = InetAddress.getByName("174.138.38.14");
+                    //InetAddress address = InetAddress.getLocalHost();
                     DatagramSocket datagramSocket = new DatagramSocket();
 
                     byte[] buffer = ("request:" + datePicker.getValue().getMonthValue() + "/" + datePicker.getValue().getDayOfMonth() + "/" + datePicker.getValue().getYear()).getBytes();
@@ -186,10 +185,10 @@ public class Main extends Application {
             int tempYPoint = (int) clientA.get(i).getYValue();
 
             if (tempYPoint != prevY) {
+                seriesA.getData().add(clientA.get(i));
                 seriesA.getData().add(new XYChart.Data<>(tempXPoint, tempYPoint * -1));
                 prevY = tempYPoint;
             }
-            seriesA.getData().add(clientA.get(i));
         }
 
         prevY = (int) clientB.get(0).getYValue();
@@ -197,10 +196,10 @@ public class Main extends Application {
             int tempXPoint = (int) clientB.get(i).getXValue();
             int tempYPoint = (int) clientB.get(i).getYValue();
             if (tempYPoint != prevY) {
+                seriesB.getData().add(clientB.get(i));
                 seriesB.getData().add(new XYChart.Data<>(tempXPoint, tempYPoint * -1));
                 prevY = tempYPoint;
             }
-            seriesB.getData().add(clientB.get(i));
         }
 
         prevY = ((int)clientA.get(0).getYValue() == 1 && (int) clientB.get(0).getYValue() == 1) ? 1 : -1;
@@ -209,11 +208,11 @@ public class Main extends Application {
             int tempYPoint = ((int)clientA.get(i).getYValue() == 1 && (int) clientB.get(i).getYValue() == 1) ? 1 : -1;
             //System.out.println("i: " +  i + " A: " + clientA.get(i).getYValue() + " B: " + clientB.get(i).getYValue() + " TempValue: " + tempPoint + " prevY: " + prevY);
             if (tempYPoint != prevY) {
+                seriesC.getData().add(new XYChart.Data(tempXPoint, tempYPoint));
                 seriesC.getData().add(new XYChart.Data<>(tempXPoint, tempYPoint * -1));
                 //System.out.println("Duplicate at: "  + i);
                 prevY = tempYPoint;
             }
-            seriesC.getData().add(new XYChart.Data(tempXPoint, tempYPoint));
         }
     }
 
