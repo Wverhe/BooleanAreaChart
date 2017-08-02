@@ -4,14 +4,19 @@ import com.core.component.CustomButton;
 import com.core.component.CustomGridPane;
 import com.core.component.InfoLabel;
 import javafx.application.Application;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.image.WritableImage;
 import javafx.stage.Stage;
 
+import javax.imageio.ImageIO;
+import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -68,6 +73,7 @@ public class Main extends Application {
         seriesC.setName("C");
 
         CustomGridPane gridPane = new CustomGridPane();
+        gridPane.setGridLinesVisible(true);
 
         ScrollPane scrollPaneA = new ScrollPane();
         scrollPaneA.setFitToHeight(true);
@@ -137,8 +143,10 @@ public class Main extends Application {
                         }
                         clientA = serverListA;
                         clientB = serverListB;
-                        updateSeries(clientA, clientB);
-                        fillSeries();
+                        if(clientA.size() > 0 && clientB.size() > 0){
+                            updateSeries(clientA, clientB);
+                            fillSeries();
+                        }
                     }
                 } catch (IOException e1) {
                     e1.printStackTrace();
@@ -146,12 +154,37 @@ public class Main extends Application {
 
             }
         );
+        CustomButton btnDownload = new CustomButton("Download");
+
+        btnDownload.setOnAction(
+            e -> {
+                WritableImage image = areaChartA.snapshot(new SnapshotParameters(), null);
+                File dirDownloads = new File("Downloads");
+                dirDownloads.mkdir();
+                File fileContainer = new File("Downloads/" + datePicker.getValue());
+                fileContainer.mkdir();
+
+                File fileA = new File("Downloads/" + datePicker.getValue() + "/GraphA.png");
+                File fileB = new File("Downloads/" + datePicker.getValue() + "/GraphB.png");
+                File fileC = new File("Downloads/" + datePicker.getValue() + "/GraphC.png");
+                try {
+                    ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", fileA);
+                    ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", fileB);
+                    ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", fileC);
+                } catch (IOException e2) {
+                    e2.printStackTrace();
+                }
+                e.consume();
+            }
+        );
         gridPane.add(btnRequest, 1, 3, 1, 1);
+        gridPane.add(btnDownload, 2, 3, 1, 1);
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.HOUR, -5);//Adjusting for NY time difference.
         datePicker = new DatePicker();
         datePicker.setValue(LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)));//Month is always off by 1?
-        gridPane.add(datePicker, 2, 3, 1, 1);
+        datePicker.setPrefWidth(Double.MAX_VALUE);
+        gridPane.add(datePicker, 0, 3, 1, 1);
         lblInfo = new InfoLabel("");
         gridPane.add(lblInfo, 0, 4, 3, 1);
 
