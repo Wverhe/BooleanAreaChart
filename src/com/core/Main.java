@@ -158,7 +158,10 @@ public class Main extends Application {
 
         btnDownload.setOnAction(
             e -> {
-                WritableImage image = areaChartA.snapshot(new SnapshotParameters(), null);
+                WritableImage imageA = areaChartA.snapshot(new SnapshotParameters(), null);
+                WritableImage imageB = areaChartB.snapshot(new SnapshotParameters(), null);
+                WritableImage imageC = areaChartC.snapshot(new SnapshotParameters(), null);
+
                 File dirDownloads = new File("Downloads");
                 dirDownloads.mkdir();
                 File fileContainer = new File("Downloads/" + datePicker.getValue());
@@ -168,9 +171,9 @@ public class Main extends Application {
                 File fileB = new File("Downloads/" + datePicker.getValue() + "/GraphB.png");
                 File fileC = new File("Downloads/" + datePicker.getValue() + "/GraphC.png");
                 try {
-                    ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", fileA);
-                    ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", fileB);
-                    ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", fileC);
+                    ImageIO.write(SwingFXUtils.fromFXImage(imageA, null), "png", fileA);
+                    ImageIO.write(SwingFXUtils.fromFXImage(imageB, null), "png", fileB);
+                    ImageIO.write(SwingFXUtils.fromFXImage(imageC, null), "png", fileC);
                 } catch (IOException e2) {
                     e2.printStackTrace();
                 }
